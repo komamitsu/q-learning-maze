@@ -2,13 +2,14 @@ package org.komamitsu.qlearningtest
 
 import com.badlogic.gdx.ApplicationAdapter
 import com.badlogic.gdx.Gdx
+import com.badlogic.gdx.Input
 import com.badlogic.gdx.graphics.Color
-import com.badlogic.gdx.graphics.glutils.ShapeRenderer
-import com.badlogic.gdx.utils.ScreenUtils
-import kotlin.properties.Delegates
 import com.badlogic.gdx.graphics.OrthographicCamera
 import com.badlogic.gdx.graphics.g2d.BitmapFont
 import com.badlogic.gdx.graphics.g2d.SpriteBatch
+import com.badlogic.gdx.graphics.glutils.ShapeRenderer
+import com.badlogic.gdx.utils.ScreenUtils
+import kotlin.properties.Delegates
 import kotlin.random.Random
 
 enum class Direction(val diffOfY: Int, val diffOfX: Int) {
@@ -85,6 +86,9 @@ class MyGame : ApplicationAdapter() {
         listOf(1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1),
         listOf(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1),
     )
+    private var mapHeight: Int = 0
+    private var mapWidth: Int = 0
+    private val menuWidth = 128
 
     private val start = Position(1, 1)
     private val goal = Position(10, 1)
@@ -95,6 +99,11 @@ class MyGame : ApplicationAdapter() {
         alpha = 0.4,
         discount = 1.0
     )
+    private enum class Mode {
+        LEARN, PLAY
+    }
+    private var mode = Mode.LEARN
+    private var playFrame = 0
 
     override fun create() {
         shapeRenderer = ShapeRenderer()
@@ -102,9 +111,11 @@ class MyGame : ApplicationAdapter() {
         batch = SpriteBatch()
         font = BitmapFont()
         font.color = Color.BLACK
-        Gdx.graphics.setWindowedMode(Gdx.graphics.width * 2, Gdx.graphics.height * 2)
-        widthOfField = Gdx.graphics.width / map.first().size
-        heightOfField = Gdx.graphics.height / map.size
+        mapHeight = Gdx.graphics.height * 2
+        mapWidth = Gdx.graphics.width * 2
+        Gdx.graphics.setWindowedMode(mapWidth + menuWidth, mapHeight)
+        widthOfField = mapWidth / map.first().size
+        heightOfField = mapHeight / map.size
         camera = OrthographicCamera(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
         camera.position.x = (Gdx.graphics.width / 2).toFloat()
         camera.position.y = (Gdx.graphics.height / 2).toFloat()
@@ -113,7 +124,49 @@ class MyGame : ApplicationAdapter() {
         batch.projectionMatrix = camera.combined
     }
 
+    private fun renderLearn() {
+        repeat(32) {
+            val direction = if (Random.nextInt(10) < 0) {
+                Direction.values().sortedBy { Random.nextInt(Direction.values().size) }.maxByOrNull { dir ->
+                    qCalc.qValue(current, dir)
+                }!!
+            }
+            else {
+                Direction.values()[Random.nextInt(Direction.values().size)]
+            }
+            qCalc.update(current, direction)
+            val next = current.move(direction)
+            if (!next.isWall(map)) {
+                current = next
+            }
+        }
+    }
+
+    private fun renderPlay() {
+        if (playFrame < 40) {
+            playFrame++
+            return
+        }
+
+        playFrame = 0
+
+        if (current == goal) {
+            return
+        }
+
+        val direction = Direction.values().sortedBy { Random.nextInt(Direction.values().size) }.maxByOrNull { dir ->
+            qCalc.qValue(current, dir)
+        }!!
+        current = current.move(direction)
+    }
+
     override fun render() {
+        if (Gdx.input.isButtonJustPressed(Input.Buttons.LEFT)) {
+            mode = Mode.PLAY
+            current = start
+            playFrame = 0
+        }
+
         ScreenUtils.clear(1f, 1f, 1f, 1f)
 
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled)
@@ -137,6 +190,7 @@ class MyGame : ApplicationAdapter() {
                 shapeRenderer.rect(renderX, renderY, widthOfField.toFloat(), heightOfField.toFloat())
             }
         }
+        shapeRenderer.color = Color.DARK_GRAY
         shapeRenderer.end()
 
         batch.begin()
@@ -155,20 +209,9 @@ class MyGame : ApplicationAdapter() {
         }
         batch.end()
 
-        repeat(32) {
-            val direction = if (Random.nextInt(10) < 0) {
-                Direction.values().sortedBy { Random.nextInt(Direction.values().size) }.maxByOrNull { dir ->
-                    qCalc.qValue(current, dir)
-                }!!
-            }
-            else {
-                Direction.values()[Random.nextInt(Direction.values().size)]
-            }
-            qCalc.update(current, direction)
-            val next = current.move(direction)
-            if (!next.isWall(map)) {
-                current = next
-            }
+        when (mode) {
+            Mode.LEARN -> renderLearn()
+            Mode.PLAY -> renderPlay()
         }
     }
 
