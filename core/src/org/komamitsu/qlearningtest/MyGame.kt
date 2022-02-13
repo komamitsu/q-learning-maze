@@ -96,8 +96,8 @@ class MyGame : ApplicationAdapter() {
     private val qCalc = QCalc(
         map = map,
         goal = goal,
-        alpha = 0.4,
-        discount = 1.0
+        alpha = 0.2,
+        discount = 0.8
     )
     private enum class Mode {
         LEARN, PLAY
@@ -113,7 +113,7 @@ class MyGame : ApplicationAdapter() {
         font.color = Color.BLACK
         mapHeight = Gdx.graphics.height * 2
         mapWidth = Gdx.graphics.width * 2
-        Gdx.graphics.setWindowedMode(mapWidth + menuWidth, mapHeight)
+        Gdx.graphics.setWindowedMode(mapWidth, mapHeight)
         widthOfField = mapWidth / map.first().size
         heightOfField = mapHeight / map.size
         camera = OrthographicCamera(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())

@@ -1,1 +1,1 @@
-# q-learning-test
+# q-learning-maze
