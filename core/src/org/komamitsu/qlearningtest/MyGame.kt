@@ -116,9 +116,9 @@ class MyGame : ApplicationAdapter() {
         Gdx.graphics.setWindowedMode(mapWidth, mapHeight)
         widthOfField = mapWidth / map.first().size
         heightOfField = mapHeight / map.size
-        camera = OrthographicCamera(Gdx.graphics.width.toFloat(), Gdx.graphics.height.toFloat())
-        camera.position.x = (Gdx.graphics.width / 2).toFloat()
-        camera.position.y = (Gdx.graphics.height / 2).toFloat()
+        camera = OrthographicCamera(Gdx.graphics.width.toFloat() * 2, Gdx.graphics.height.toFloat() * 2)
+        camera.position.x = (Gdx.graphics.width).toFloat()
+        camera.position.y = (Gdx.graphics.height).toFloat()
         camera.update()
         shapeRenderer.projectionMatrix = camera.combined
         batch.projectionMatrix = camera.combined
